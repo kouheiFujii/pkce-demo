@@ -1,0 +1,65 @@
+@startuml pkce authentication flow
+!theme aws-orange
+
+actor "ユーザ" as user
+participant "アプリ" as app
+participant "Auth0テナント" as tenant
+
+user -> app : クリックログイン
+
+activate app
+app -> app : code_verifier と code_challenge 作成
+app -> tenant : /aurhorizeエンドポイントにcode_challengeを載せてリクエスト
+
+note right app
+[request]
+code_challenge
+code_challenge_method
+code_verifier
+end note
+deactivate app
+
+activate tenant
+note right tenant
+後で確認のため使用するので
+code_challenge と
+code_challenge_method を
+保存しておく
+end note
+
+tenant -> user : ユーザに認証画面を表示
+deactivate tenant
+
+user -> tenant : ユーザが認証を行う
+
+activate tenant
+tenant -> app : 認可コードを返却
+
+activate app
+app -> tenant : Auth0のユーザ情報にアクセスするためのトークンをリクエスト
+deactivate app
+
+note right app
+[request]
+code（認可コード）
+code_verifier
+end note
+
+tenant -> tenant
+
+note right tenant
+保存しておいた
+code_challenge_method で
+code_verifier を変換
+code_challenge と同値か確認
+end note
+
+tenant -> app : アクセストークンをレスポンス
+deactivate tenant
+
+note right app
+取得したアクセストークンを元に
+ユーザ情報をAuth0から
+取得する
+end note
+@enduml
